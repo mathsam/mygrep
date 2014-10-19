@@ -4,6 +4,12 @@ class RegExp (object):
         self._reg_exp_ = re
         
     def grep(self,text):
+        """Return None if this RegExp object does not match txt. Otherwise
+           return a tuple of two ints. The first int is the (zero-based)
+           index within txt at which the match begins. The second int is the
+           (zero-based) index within txt that is one-beyond the index at
+           which the match ends.  If this RegExp object was created from the
+           empty string, then return the tuple (0, 0)."""
         if_match,match_left,match_right = self._match(text)
         if(if_match):
             return (match_left, match_right)
@@ -16,6 +22,7 @@ class RegExp (object):
             return True, 0, 0
         match_position_left = 0
         if_match = False
+        match_width = 0
         if (self._reg_exp_[0] == '^'):
             if_match, match_width = \
                 self._match_here(self._reg_exp_[1:], text)
@@ -26,7 +33,7 @@ class RegExp (object):
                         text[match_position_left:])
                 if(if_match):
                     break
-        return if_match, match_position_left, match_position_left+match_width-1
+        return if_match, match_position_left, match_position_left+match_width
         
             
     def _match_here(self,regexp, text):
@@ -61,7 +68,7 @@ class RegExp (object):
             if(if_match):
                 return if_match, match_width + i
             i = i - 1
-            condition = i > 0
+            condition = i >= 0
         return False, 0
 
     def _match_plus(self,c,regexp,text):
@@ -83,15 +90,19 @@ class RegExp (object):
         return False, 0
 
     def _match_question(self,c,regexp,text):
-        """ search for c?regexp
+        """ search for c?regexp, left most longest search
         for example, a? matches zero or one occurance of a"""
         i=0;
         if(text[0] == c):
             i = 1
         else:
             i = 0
-
-        if_match, match_width = self._match_here(regexp,text[i:])
-        if(if_match):
-            return if_match, match_width + i
+        
+        condition = True
+        while(condition):
+            if_match, match_width = self._match_here(regexp,text[i:])
+            if(if_match):
+                return if_match, match_width + i
+            i = i - 1
+            condition = i >= 0
         return False, 0
